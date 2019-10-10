@@ -1,0 +1,8 @@
+.ipynb_checkpoints/
+train/
+test/
+validation/
+train_2014/
+annotations/
+*.json
+*.DS_Store
