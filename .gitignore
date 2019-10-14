@@ -6,3 +6,4 @@ train_2014/
 annotations/
 *.json
 *.DS_Store
+__pycache__/
