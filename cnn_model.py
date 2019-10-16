@@ -18,8 +18,8 @@ class ImageClassificationModel:
         batch_1_batchNorm = BatchNormalization()(max_pooling_initial)
         batch_1_activ = Activation('relu')(batch_1_batchNorm)
         batch_1_conv2d_1 = Conv2D(128, (1,1), activation='relu', padding='same')(batch_1_activ)
-        batch_2_drop = Dropout(0.3)(batch_2_conv2d_1)
-        batch_1_conv2d_2 = Conv2D(32, (3,3), activation='relu', padding='same')(batch_1_conv2d_1)
+        batch_1_drop = Dropout(0.3)(batch_1_conv2d_1)
+        batch_1_conv2d_2 = Conv2D(32, (3,3), activation='relu', padding='same')(batch_1_drop)
 
         batch_2 = Concatenate()([max_pooling_initial, batch_1_conv2d_2])
 
