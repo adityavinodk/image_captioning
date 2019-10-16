@@ -8,3 +8,5 @@ annotations/
 *.DS_Store
 __pycache__/
 *.npy
+*.h5
+*.pickle
