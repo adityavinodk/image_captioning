@@ -8,5 +8,6 @@ annotations/
 *.DS_Store
 __pycache__/
 *.npy
-*.zarr
 *.h5
+*.pickle
+*.zarr

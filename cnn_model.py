@@ -3,7 +3,6 @@ from tensorflow.keras.models import Sequential, Model
 from keras import backend
 # from numba import jit
 
-
 class ImageClassificationModel:
 #     @jit(nopython=True)
     @staticmethod
@@ -15,7 +14,6 @@ class ImageClassificationModel:
         input_tensor=Input(input_size)
         initial = Conv2D(64, (7,7), strides=2, activation='relu')(input_tensor)
         max_pooling_initial = MaxPooling2D(pool_size=(2,2))(initial)
-        # print(max_pooling_initial)
 
         batch_1_batchNorm = BatchNormalization()(max_pooling_initial)
         batch_1_activ = Activation('relu')(batch_1_batchNorm)
