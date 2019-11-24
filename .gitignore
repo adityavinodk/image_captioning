@@ -10,3 +10,4 @@ __pycache__/
 *.npy
 *.h5
 *.pickle
+*.zarr
