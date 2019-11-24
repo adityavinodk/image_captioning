@@ -1,9 +1,11 @@
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Activation, Dropout, Flatten, Dense, BatchNormalization, Input, Concatenate, AvgPool2D, GlobalAveragePooling2D
 from tensorflow.keras.models import Sequential, Model
 from keras import backend
+# from numba import jit
 
 
 class ImageClassificationModel:
+#     @jit(nopython=True)
     @staticmethod
     def build(width, height, number_of_classes, final_activation='softmax'):
         input_size = (height, width, 3) 
