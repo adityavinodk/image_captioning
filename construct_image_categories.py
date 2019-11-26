@@ -4,11 +4,16 @@ import os
 from tqdm import tqdm
 from multiprocessing import Manager, Process, Pool
 # import time
+if len(sys.argv)<2:
+    print("Run the file as $python construct_images_categories.py <image_directory>")
+    exit()
+
+images_count = len(os.listdir(sys.argv[1]))
 
 def worker(i,annotations,categories,mydict):
     print("Process running - ",os.getpid())
-    os.chdir('validation')
-    for fc in range(i,i+5000):
+    os.chdir(sys.argv[0])
+    for fc in range(i,i+int(images_count/4)+1000):
         if fc>=len(os.listdir()):
             return
         file_name = os.listdir()[fc]
@@ -34,14 +39,20 @@ if __name__ == "__main__":
     manager = Manager()
     categories = []
     mydict = manager.dict()
+    indexes = [0, int(images_count/4), int(2 * images_count/4), int(3 * images_count/4)]
+    
     with open("annotations/instances_train2014.json", 'r') as file:
         instances = json.load(file)
     for category in instances['categories']:
         categories.append([category['id'],category['name']])
     annotations = instances['annotations']
+    del instances
+    
     p = Pool(4)
-    p.starmap(worker, [(i,annotations,categories,mydict) for i in [0,4135,8270,12405]])
-    with open ('validation_annotations.json', 'w') as outfile:
+    p.starmap(worker, [(i,annotations,categories,mydict) for i in indexes])
+    
+    save_file_name = sys.argv[1]+'_annotations.json'
+    with open (save_file_name, 'w') as outfile:
         json.dump(mydict.copy(), outfile)
     print(mydict)
     print("Operation Done.")
