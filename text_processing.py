@@ -10,6 +10,63 @@ import keras
 import tensorflow as tf
 import dask.array as da
 from tensorflow.keras.models import load_model
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+class textProcessing:
+    @staticmethod
+    def create_sequences(tokenizer, max_length, description, photo, vocab_size):
+        X1, X2, Y = [], [], []
+        seq = tokenizer.texts_to_sequences([(description.compute()).tolist()])[0]
+        for i in range(1,len(seq)):
+            in_seq, out_seq = seq[:i], seq[i]
+            # pad input sequence
+            in_seq = pad_sequences([in_seq], maxlen=max_length)[0]
+            # encode output sequence
+            out_seq = to_categorical([out_seq], num_classes=vocab_size)[0]
+            # store
+            X1.append(photo.compute())
+            X2.append(in_seq)
+            Y.append(out_seq)
+        return np.array(X1), np.array(X2), np.array(Y)
+    
+    @staticmethod
+    def data_generator(descriptions, photos, tokenizer, max_length, vocab_size):
+        while 1:
+            for i in range(len(descriptions)):
+                in_img, in_seq, out_word = textProcessing.create_sequences(tokenizer, max_length, descriptions[i], photos[i], vocab_size)
+                nb = in_img.shape[0]
+                yield [[in_img, in_seq], out_word, nb]
+    
+    @staticmethod
+    def word_for_id(integer, tokenizer):
+        for word, index in tokenizer.word_index.items():
+            if index == integer:
+                return word
+        return None
+
+    @staticmethod
+    def generate_desc(rnn_model, tokenizer, photo, max_length):
+        in_text = 'startseq'
+        for i in range(max_length):
+            sequence = tokenizer.texts_to_sequences([in_text])[0]
+            # pad input
+            sequence = pad_sequences([sequence], maxlen=max_length)
+            # predict next word
+            probs = rnn_model.predict([photo, sequence], verbose=0)
+            # convert probability to integer
+            probs_max = np.argmax(probs)
+            # map integer to word
+            word = textProcessing.word_for_id(probs_max, tokenizer)
+            # stop if we cannot map the word
+            if word is None:
+                break
+            # append as input for generating the next word
+            in_text += ' ' + word
+            if word == 'endseq':
+                break
+        return in_text
+
 
 def convert_embedding(embedding):
     embedding = (embedding*1000).astype(int)
