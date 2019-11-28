@@ -38,24 +38,21 @@ if __name__ == "__main__":
             id = captions[i]['image_id']
             if images[id] in train:
                 if images[id] not in train_cap:
-                    train_cap[images[id]] = [1,[captions[i]['caption']]]
+                    train_cap[images[id]] = [captions[i]['caption']]
                 else:
-                    train_cap[images[id]][0] += 1
-                    train_cap[images[id]][1].append(captions[i]['caption'])
+                    train_cap[images[id]].append(captions[i]['caption'])
             elif images[id] in val:
                 if images[id] not in val_cap:
-                    val_cap[images[id]] = [1,[captions[i]['caption']]]
+                    val_cap[images[id]] = [captions[i]['caption']]
                 else:
-                    val_cap[images[id]][0] += 1
-                    val_cap[images[id]][1].append(captions[i]['caption'])
+                    val_cap[images[id]].append(captions[i]['caption'])
             elif images[id] in test:
                 if images[id] not in test_cap:
-                    test_cap[images[id]] = [1,[captions[i]['caption']]]
+                    test_cap[images[id]] = [captions[i]['caption']]
                 else:
-                    test_cap[images[id]][0] += 1
-                    test_cap[images[id]][1].append(captions[i]['caption'])
+                    test_cap[images[id]].append(captions[i]['caption'])
             else:
-                    calc +=1
+                calc +=1
         print("Done Preprocessing Part 1, in Time :", timer() - st)
     
     with open ('validation_captions.json', 'w') as outfile:
