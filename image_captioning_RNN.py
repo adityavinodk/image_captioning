@@ -93,4 +93,3 @@ with tf.device('/gpu:0'):
         callbacks = callbacks,
         initial_epoch=6,
         verbose=1)
-    model

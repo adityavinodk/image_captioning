@@ -45,8 +45,7 @@ test_datagen = ImageDataGenerator(rescale=1./255)
 with tf.device('/gpu:0'):
     stop_early = EarlyStopping(monitor='val_loss',patience = 20)
     reduceLR = ReduceLROnPlateau(monitor='val_loss',paitence = 20, factor=0.2, min_lr = 0.0001)
-    ModelCheck = ModelCheckpoint('best_model_test.h5', monitor='val_loss', mode='min', verbose=1, save_best_only=True)
-    callbacks = [stop_early, reduceLR, ModelCheck]
+    callbacks = [stop_early, reduceLR]
     scores = model.evaluate_generator(
         test_datagen.flow(test_x, test_y, batch_size=batch_size),
         steps = nb_test_samples//batch_size,
