@@ -1,4 +1,4 @@
-import json as js
+import json
 from tqdm import tqdm
 import string
 import sys
@@ -80,13 +80,16 @@ if __name__ == "__main__":
                 embedding[x]=0
         return embedding
 
-    with open("train_captions.json") as file:
-        train_captions = js.load(file)
-    with open("test_captions.json") as file:
-        test_captions = js.load(file)
-    with open("validation_captions.json") as file:
-        validation_captions = js.load(file)
-        
+    with open("data/train_captions.json") as file:
+        train_captions = json.load(file)
+    with open("data/test_captions.json") as file:
+        test_captions = json.load(file)
+    with open("data/validation_captions.json") as file:
+        validation_captions = json.load(file)
+    
+    # Change this list to include all the words that will be common in many captions and do not have much meaning
+    removeWordsList = ['the', 'an']
+
     table = str.maketrans('', '', string.punctuation)
     for k in [train_captions, test_captions, validation_captions]:
         caption_list = list(k.keys())
@@ -97,33 +100,40 @@ if __name__ == "__main__":
                 desc = cap[j]
                 desc = desc.split()
                 desc = [word.lower() for word in desc]
-                desc = [word for word in desc if word != 'the']
-                desc = [word for word in desc if word != 'an']
+                desc = [word for word in desc if word not in removeWordsList]
                 desc = [w.translate(table) for w in desc]
                 desc = [word for word in desc if len(word)>1]
                 desc = [word for word in desc if word.isalpha()]
                 list_cap.append(' '.join(desc))
             k[caption_list[i]] = list_cap
 
-    with open("train_captions.json",'w') as file:
-        js.dump(train_captions, file)
-    with open("test_captions.json",'w') as file:
-        js.dump(test_captions, file)
-    with open("validation_captions.json",'w') as file:
-        js.dump(validation_captions, file)
+    with open("data/train_captions.json",'w') as file:
+        json.dump(train_captions, file)
+    with open("data/test_captions.json",'w') as file:
+        json.dump(test_captions, file)
+    with open("data/validation_captions.json",'w') as file:
+        json.dump(validation_captions, file)
 
-    if "best_model.h5" in os.listdir():
-        cnn_model = load_model("best_model.h5")
+    if "data/best_model_cnn.h5" in os.listdir():
+        cnn_model = load_model("data/best_model_cnn.h5")
     else: 
         print("Please run CNN model in Image_captioning_CNN.ipynb")
         exit()
 
-    if 'all_descriptions_train.zarr' not in os.listdir('.') and 'embedding_trains_128.zarr' not in os.listdir('.'):
-        trainImagePaths = list(paths.list_images('train'))
+    if 'labels.npy' not in os.listdir('data'):
+        with open('data/image_data/instances.json','r') as file:
+            instances = json.load(file)
+
+        labelsList = np.array([category['name'] for category in instances['categories']])
+        np.save('data/labels.npy', labelsList)
+        del instances
+    else: labelsList = np.load('data/labels.npy', allow_pickle=True)
+
+    if 'all_descriptions_train.zarr' not in os.listdir('data') and 'embedding_train_128.zarr' not in os.listdir('data'):
+        trainImagePaths = list(paths.list_images('data/train'))
         # Change the below value as per need
         train_length = 30000
         
-        labelsList = np.load('labels.npy', allow_pickle = True)
         embedding_train = np.zeros(shape = (1000,)+labelsList.shape)
         all_descriptions_train = []
         embedding_train_dask = da.from_array(np.zeros(shape=(0,80)), chunks=827)
@@ -153,24 +163,23 @@ if __name__ == "__main__":
                 captions.append(updated_desc)
             all_descriptions_train.append(captions)
 
-        embedding_train_dask.to_zarr('embedding_train_128.zarr')
+        embedding_train_dask.to_zarr('data/embedding_train_128.zarr')
         
         all_descriptions_train = np.array([np.array(xi) for xi in all_descriptions_train])
         all_descriptions_train = da.from_array(all_descriptions_train, chunks = (827, 5))
-        all_descriptions_train.to_zarr('all_descriptions_train.zarr')
+        all_descriptions_train.to_zarr('data/all_descriptions_train.zarr')
 
         del all_descriptions_train; del embedding_train; del train_captions; del trainImagePaths
 
-    if 'all_descriptions_validation.zarr' not in os.listdir('.') and 'embedding_validations_128.zarr' not in os.listdir('.'):
+    if 'all_descriptions_validation.zarr' not in os.listdir('data') and 'embedding_validation_128.zarr' not in os.listdir('data'):
         validationImagePaths = list(paths.list_images('validation'))
         # Change the below value as per need
-        validation_length = 20000
+        validation_length = 16530
         
-        labelsList = np.load('labels.npy', allow_pickle = True)
         embedding_validation = np.zeros(shape = (1000,)+labelsList.shape)
         all_descriptions_validation = []
         embedding_validation_dask = da.from_array(np.zeros(shape=(0,80)), chunks=827)
-        k=0
+        done_val=0
 
         print("Not found embeddings for validation, saving it now along with descriptions...")
         for i in tqdm(range(validation_length)):
@@ -184,9 +193,9 @@ if __name__ == "__main__":
             arr = np.expand_dims(arr,0)
             arr = arr/255
             embedding = cnn_model.predict(arr)[0]
-            embedding_validation[i-k] = embedding
-            if (i-k)==999:
-                    k=i+1
+            embedding_validation[i-done_val] = embedding
+            if (i-done_val)==999:
+                    done_val=i+1
                     embedding_validation_dask = da.concatenate([embedding_validation_dask,embedding_validation], axis = 0)
                     embedding_validation = np.zeros(shape = (1000,)+labelsList.shape)
             captions = []
@@ -204,17 +213,15 @@ if __name__ == "__main__":
 
         del all_descriptions_validation; del embedding_validation; del validation_captions; del validationImagePaths
 
-    if 'all_descriptions_test.zarr' not in os.listdir('.') and 'embedding_tests_128.zarr' not in os.listdir('.'):
+    if 'all_descriptions_test.zarr' not in os.listdir('.') and 'embedding_test_128.zarr' not in os.listdir('.'):
         testImagePaths = list(paths.list_images('test'))
         # Change the below value as per need
-        test_length = sum(len(test_captions[key.split(os.path.sep)[-1]]) for key in testImagePaths[:2000])
         test_length = 10000
         
-        labelsList = np.load('labels.npy', allow_pickle = True)
         embedding_test = np.zeros(shape = (1000,)+labelsList.shape)
         all_descriptions_test = []
         embedding_test_dask = da.from_array(np.zeros(shape=(0,80)), chunks=827)
-        k=0
+        done_val=0
 
         print("Not found embeddings for test, saving it now along with descriptions...")
         for i in tqdm(range(test_length)):
@@ -228,9 +235,9 @@ if __name__ == "__main__":
             arr = np.expand_dims(arr,0)
             arr = arr/255
             embedding = cnn_model.predict(arr)[0]
-            embedding_test[i-k] = embedding
-            if (i-k)==999:
-                    k=i+1
+            embedding_test[i-done_val] = embedding
+            if (i-done_val)==999:
+                    done_val=i+1
                     embedding_test_dask = da.concatenate([embedding_test_dask,embedding_test], axis = 0)
                     embedding_test = np.zeros(shape = (1000,)+labelsList.shape)
             captions = []

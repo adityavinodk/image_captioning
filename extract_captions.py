@@ -5,18 +5,18 @@ from tqdm import tqdm
 from timeit import default_timer as timer
 import tensorflow as tf
 
-train,val,test = [os.listdir('train'), os.listdir('validation'), os.listdir('test')]
+train,val,test = [os.listdir('data/train'), os.listdir('data/validation'), os.listdir('data/test')]
 
 if __name__ == "__main__":
     with tf.device('/cpu:0'):
         st = timer()
         print('Loading Captions ...')
-        with open("./annotations/captions_train2014.json", 'r') as file:
+        with open(".data/image_data/captions.json", 'r') as file:
             captions = json.load(file)['annotations']
         print("Done Loading Captions, in Time :", timer() - st)
         st = timer()
         print('Loading Image Ids ...')
-        with open("./annotations/instances_train2014.json", 'r') as file:
+        with open(".data/image_data/instances.json", 'r') as file:
             raw_images = json.load(file)['images']
         print("Done Loading Image Ids, in Time :", timer() - st)
     # print(len(captions))
@@ -55,9 +55,9 @@ if __name__ == "__main__":
                 calc +=1
         print("Done Preprocessing Part 1, in Time :", timer() - st)
     
-    with open ('validation_captions.json', 'w') as outfile:
+    with open ('data/validation_captions.json', 'w') as outfile:
         json.dump(val_cap, outfile)
-    with open ('train_captions.json', 'w') as outfile:
+    with open ('data/train_captions.json', 'w') as outfile:
         json.dump(train_cap, outfile)
-    with open ('test_captions.json', 'w') as outfile:
+    with open ('data/test_captions.json', 'w') as outfile:
         json.dump(test_cap, outfile)
