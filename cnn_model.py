@@ -57,5 +57,10 @@ class ImageClassificationModel:
         top_layer_dropout = Dropout(0.4)(top_layer_dense_1)
         top_layer_dense_2 = Dense(number_of_classes, activation=final_activation)(top_layer_dropout)
         model = Model(inputs=input_tensor, outputs=top_layer_dense_2)
-
+        
+        model.summary()
         return model
+
+if __name__ == "__main__":
+    model_class = ImageClassificationModel()
+    model_class.build(224, 224, 80)
