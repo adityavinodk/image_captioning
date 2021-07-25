@@ -27,4 +27,9 @@ class RNNBimodel:
         model = Model(inputs=[inputs1, inputs2], outputs=outputs)
 
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.summary()
         return model
+
+if __name__ == '__main__':
+    bimodal = RNNBimodel()
+    bimodal.build(200, 40)
